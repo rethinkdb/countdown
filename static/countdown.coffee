@@ -35,15 +35,7 @@ $ ->
     # Repaint DOM elements and update the graph
     update = -> $.getJSON '/get_data', (reports) ->
         data = _.map reports, (report) ->
-            return ['hello']
-        ###
-        data = _.map data, (issue) ->
-            console.log issue
-            d = new Date(issue.datetime)
-            datetime = new Date(d.valueOf() + 1000 * 60 * 60 * 12) # offset for PDT
-            open_issues = parseInt(issue.open_issues)
-            return [datetime, open_issues]
-        ###
+            return [new Date(report.datetime), report.open_issues]
 
         $.plot $plot, [data],
             series:
@@ -63,10 +55,10 @@ $ ->
             grid:
                 markings: day_areas
 
-            $.getJSON '/latest', (latest) ->
-                $open_issues.text latest.open_issues
-                $closed_issues.text latest.closed_issues
-                days_left = (deadline - (new Date latest.datetime))/1000/24/60/60
+            $.getJSON '/latest', (report) ->
+                $open_issues.text report.open_issues
+                $closed_issues.text report.closed_issues
+                days_left = (deadline - (new Date report.datetime))/1000/24/60/60
                 $days_left.text Math.floor(days_left)
 
         $plot.resize()
