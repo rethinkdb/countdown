@@ -1,0 +1,48 @@
+@import "vendor/lesshat.less";
+
+html, body {
+    height: 100%; /* make the percentage height on placeholder work */
+}
+h1 {
+    font-size:170px;
+    line-height: 180px;
+    &.days-left { margin-top: 30px; }
+}
+p {
+    color: #888;
+    font-size: 40px;
+    line-height: 45px;
+}
+#progress-caption {
+    color: #888;
+    font-size: 20px;
+    margin-top: 10px;
+} 
+hr {
+    border: 0;
+    width: 70%;
+    color: #CCC;
+    background-color: #CCC;
+    height: 2px;
+    margin-top: 60px;
+}
+#left { padding-left: 30px; }
+#progress {
+    margin-top: 50px;
+    width: 68%;
+    height:20px;
+    background-color:rgba(0,0,0,0.15);
+    padding:3px;
+    .border-radius(5px);
+    .box-shadow(~"0 1px 5px #000 inset, 0 1px 0 #fff");
+    span {
+        display:block;
+        height:20px;
+        width: 60%;
+        .border-radius(3px);
+        .box-shadow(~"0 1px 0 rgba(255, 255, 255, .5) inset");
+        background: #a90329; /* Old browsers */
+        .gradient(~"linear-gradient(to bottom, #a90329 0%,#8f0222 44%,#6d0019 100%");
+        filter: progid:DXImageTransform.Microsoft.gradient( startColorstr='#a90329', endColorstr='#6d0019',GradientType=0 ); /* IE6-9 */
+    }
+}

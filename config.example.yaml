@@ -1,0 +1,13 @@
+--- # Leaderboard configuration
+repo: repo/repo
+oauth: super_secret_token
+timespan: 30
+flask:
+    host: '127.0.0.1'
+    port: 5000
+rethinkdb:
+    host: '127.0.0.1'
+    port: 28015
+    db: countdown_app
+milestone: 'issue_milestone'
+deadline: '2013-02-14'
