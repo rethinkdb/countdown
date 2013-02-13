@@ -12,22 +12,22 @@
         {% assets "countdown_js" %}
             <script type="text/javascript" src="{{ ASSET_URL }}"></script>
         {% endassets %}
+        {% raw %}
+        <script id="summary-template" type="text/x-handlebars-template">
+            <h1 class="open-issues">{{open_issues}}</h1>
+            <p>open {{inflect open_issues "issue" "issues"}}</p>
+            <h1 class="days-left">{{days_left}}</h1>
+            <p>{{inflect days_left "day" "days"}} left</p>
+            <hr />
+            <div id="progress"><span style="width:{{progress_percent}}%;"></span></div>
+            <div id="progress-caption">{{open_issues}} open / {{closed_issues}} closed</div>
+        </script>
+        {% endraw %}
     </head>
     <body>
         <table style="width:100%; height: 100%;"><tbody><tr>
             <td id="left" style="width:23%;vertical-align:top;">
-                <h1 class="open-issues"></h1>
-                <p>open issues</p>
-                <h1 class="days-left"></h1>
-                <p>days left</p>
-                <hr />
-                <div id="progress"><span></span></div>
-                <div id="progress-caption">
-                    <span class="open-issues"></span>
-                    open /
-                    <span class="closed-issues"></span>
-                    closed
-                </div>
+                <div id="summary"></div>
             </td>
             <td id="right" style="width:77%;">
                 <div id="chart" style="height: 95%;"></div>

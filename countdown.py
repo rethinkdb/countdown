@@ -14,6 +14,7 @@ import sys
 config = yaml.load(open('config.yaml'))
 HEADERS = {'Authorization': 'token ' + config['oauth']}
 URL = 'https://api.github.com/repos/'+config['repo']
+MILESTONE = config['milestone']
 STATS_TABLE = 'stats'
 ISSUES_TABLE = 'issues'
 
@@ -21,11 +22,16 @@ ISSUES_TABLE = 'issues'
 def connect_to_db():
     return r.connect(host=config['rethinkdb']['host'], port=config['rethinkdb']['port'], db_name=config['rethinkdb']['db'])
 
-def update_data():
-    print 'Updating data:'
+def update_data(check_for_existing_data=False):
     conn = connect_to_db()
-    pull_new_issues(conn)
-    generate_summary(conn)
+    print "check for existing data: "+str(check_for_existing_data)
+    print "count_issues: "+ str(r.table(ISSUES_TABLE).count().run()) 
+    print "count stats: "+ str(r.table(STATS_TABLE).count().run())
+    print "boolean: "+ str(not check_for_existing_data or (check_for_existing_data and r.table(ISSUES_TABLE).count().run() == 0))
+    if not check_for_existing_data or (check_for_existing_data and r.table(ISSUES_TABLE).count().run() == 0):
+        pull_new_issues(conn)
+    if not check_for_existing_data or (check_for_existing_data and r.table(STATS_TABLE).count().run() == 0):
+        generate_stats(conn)
     conn.close()
     
 
@@ -55,9 +61,10 @@ def pull_new_issues(rdb_conn):
     print "Pulled a total of %d issues." % len(issues)
     r.table(ISSUES_TABLE).delete().run(rdb_conn)
     r.table(ISSUES_TABLE).insert(issues).run(rdb_conn)
-    print "Insert %d issues into RethinkDB." % r.table(ISSUES_TABLE).count().run()
+    num_inserted = r.table(ISSUES_TABLE).count().run()
+    print "Inserted %d issues into RethinkDB." % num_inserted
 
-def generate_summary(rdb_conn):
+def generate_stats(rdb_conn):
     issues = r.table(ISSUES_TABLE)
     issues_with_milestone = issues.filter(lambda issue: issue['milestone'] != None)
     milestones = issues_with_milestone.map(lambda issue: issue['milestone']['title']).distinct()
@@ -126,10 +133,13 @@ bundle_coffee = Bundle('countdown.coffee', filters='coffeescript', output='gen/c
 assets.register('countdown_js', bundle_coffee)
 
 bundle_js = Bundle('vendor/jquery-1.9.1.min.js',
-            'vendor/jquery.flot.min.js',
+            'vendor/jquery.flot.js',
+            'vendor/jquery.flot.time.js',
             'vendor/jquery.flot.resize.js',
             'vendor/underscore-min.js',
             'vendor/bootstrap.min.js',
+            'vendor/handlebars.js',
+            'vendor/swag.min.js',
         filters='rjsmin', output='gen/vendor.js')
 assets.register('vendor_js', bundle_js)
 
@@ -147,9 +157,9 @@ def index():
 
 @app.route('/get_data')
 def get_data():
-    selection = list(r.table(STATS_TABLE).map(lambda report:
+    selection = list(r.table(STATS_TABLE).order_by('datetime').map(lambda report:
         report['by_milestone'].filter(lambda report_by_m:
-            report_by_m['milestone'] == 'all'
+            report_by_m['milestone'] == MILESTONE
         ).map(lambda filtered_report:
             filtered_report.merge({'datetime': report['datetime']})
         )[0]).run(g.rdb_conn))
@@ -157,9 +167,9 @@ def get_data():
 
 @app.route('/latest')
 def latest():
-    last_report = r.table(STATS_TABLE).order_by('datetime')[0]
+    last_report = r.table(STATS_TABLE).order_by(r.desc('datetime'))[0]
     selection = last_report['by_milestone'].filter(lambda report_by_m:
-            report_by_m['milestone'] == 'all'
+            report_by_m['milestone'] == MILESTONE
     )[0].merge({'datetime': last_report['datetime']}).run(g.rdb_conn)
     return json.dumps(selection)
 
@@ -171,7 +181,7 @@ def get_deadline():
     })
 
 # Process to get the new data points
-#logging.basicConfig(level=logging.DEBUG)
+logging.basicConfig(level=logging.DEBUG)
 sched = Scheduler()
 
 @sched.interval_schedule(minutes=10)
@@ -181,5 +191,5 @@ def timed_job():
 # Kick everything off
 if __name__ == '__main__':
     sched.start()
-    update_data()
+    update_data(check_for_existing_data=True)
     app.run()
