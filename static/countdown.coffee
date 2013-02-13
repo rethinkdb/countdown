@@ -40,12 +40,6 @@ $ ->
     # Repaint DOM elements and update the graph
     update = -> $.getJSON '/get_data', (reports) ->
         data = _.map reports, (report) ->
-            console.log 'report datetime: '+report.datetime
-            d = new Date(report.datetime)
-            console.log 'local datetime: '+d
-            #debugger
-            e = new Date(d.getTime() - 1000 * 60 * 60 * 12)
-            console.log 'corrected datetime: '+e
             return [new Date(report.datetime), report.open_issues]
 
         $.plot $plot, [data],
