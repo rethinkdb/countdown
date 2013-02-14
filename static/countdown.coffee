@@ -26,8 +26,10 @@ correct_for_timezone = (date) -> new Date(date.getTime() + date.getTimezoneOffse
 $ ->
     templates =
         summary: Handlebars.compile $('#summary-template').html()
+        leaderboard: Handlebars.compile $('#leaderboard-template').html()
     $plot = $('#chart')
     $summary = $('#summary')
+    $leaderboard = $('#leaderboard')
     $open_issues = $('.open-issues')
     $closed_issues = $('.closed-issues')
     $days_left = $('.days-left')
@@ -38,38 +40,45 @@ $ ->
             height: $(window).height() * 0.95
 
     # Repaint DOM elements and update the graph
-    update = -> $.getJSON '/get_data', (reports) ->
-        data = _.map reports, (report) ->
-            return [new Date(report.datetime), report.open_issues]
+    update = ->
+        $.getJSON '/latest', (report) ->
+            $summary.html templates['summary']
+                open_issues: report.open_issues
+                closed_issues: report.closed_issues
+                days_left: Math.floor((deadline - new Date report.datetime)/1000/24/60/60)
+                progress_percent: Math.floor(report.closed_issues / (report.open_issues + report.closed_issues) * 100)
+ 
+            user_stats = _.sortBy report.user_stats, (stats) -> stats.closed_issues
+            num_leaders = 3
+            $leaderboard.html templates['leaderboard']
+                winners: _.last(user_stats, num_leaders)
+                losers: _.first(user_stats, num_leaders)
+        $.getJSON '/get_data', (reports) ->
+            data = _.map reports, (report) ->
+                return [new Date(report.datetime), report.open_issues]
 
-        $.plot $plot, [data],
-            series:
-                color: '#A51026'
-                lines: { show: true }
-                points:
-                    show: true
-                    fill: true
-                    fillColor: 'rgba(165, 16, 38, 0.2)'
-                shadowSize: 0
-            xaxis:
-                mode: 'time'
-                twelveHourClock: true
-                timeformat: "%b %e, %l:%M %p" 
-                tickLength: 8
-                timezone: 'browser'
-            yaxis:
-                minTickSize: 1
-                tickDecimals: 0
-            grid:
-                markings: day_areas
+            $.plot $plot, [data],
+                series:
+                    color: '#A51026'
+                    lines: { show: true }
+                    points:
+                        show: true
+                        fill: true
+                        fillColor: 'rgba(165, 16, 38, 0.2)'
+                    shadowSize: 0
+                xaxis:
+                    mode: 'time'
+                    twelveHourClock: true
+                    timeformat: "%b %e, %l:%M %p" 
+                    tickLength: 8
+                    timezone: 'browser'
+                yaxis:
+                    minTickSize: 1
+                    tickDecimals: 0
+                grid:
+                    markings: day_areas
 
-            $.getJSON '/latest', (report) ->
-                $summary.html templates['summary']
-                    open_issues: report.open_issues
-                    closed_issues: report.closed_issues
-                    days_left: Math.floor((deadline - new Date report.datetime)/1000/24/60/60)
-                    progress_percent: Math.floor(report.closed_issues / (report.open_issues + report.closed_issues) * 100)
-        $plot.resize()
+            $plot.resize()
 
     # Get the deadline and kick off the application
     $.getJSON '/get_deadline', (data) ->

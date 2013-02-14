@@ -13,11 +13,6 @@ p {
     font-size: 40px;
     line-height: 45px;
 }
-#progress-caption {
-    color: #888;
-    font-size: 20px;
-    margin-top: 10px;
-} 
 hr {
     border: 0;
     width: 70%;
@@ -26,7 +21,51 @@ hr {
     height: 2px;
     margin-top: 60px;
 }
-#left { padding-left: 30px; }
+#layout {
+    width: 100%;
+    height: 100%;
+    td { vertical-align: top; }
+    #left {
+        padding-left: 30px;
+        width: 23%;
+    }
+    #center { width: 52%;
+        #chart { height: 95%; }
+    }
+    #right {
+        width: 25%%;
+        padding-right: 30px;
+        #leaderboard {
+            @height: 40px;
+            .user {
+                padding: 8px 0;
+                border-top: thin solid #ddd;
+                &:first-child { border-top: none; }
+                p {
+                    font-size: 14px;
+                    color: #444;
+                    margin-bottom: 0;
+                    height: @height;
+                    text-overflow: ellipsis;
+                    vertical-align: top;
+                }
+                .name { font-weight: bold; }
+                img, p.name { 
+                    display: inline-block;
+                }
+                .open-closed {
+                    float: right;
+                }
+                img {
+                    width: @height;
+                    height: @height;
+                    margin-right: 10px;
+                    border: thin solid #ccc;
+                }
+            }
+        }
+    }
+}
 #progress {
     margin-top: 50px;
     width: 68%;
@@ -46,3 +85,9 @@ hr {
         filter: progid:DXImageTransform.Microsoft.gradient( startColorstr='#a90329', endColorstr='#6d0019',GradientType=0 ); /* IE6-9 */
     }
 }
+#progress-caption {
+    color: #888;
+    font-size: 20px;
+    margin-top: 10px;
+} 
+

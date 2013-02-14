@@ -75,15 +75,16 @@ def generate_stats(rdb_conn):
         issue_set = issue_set.filter(lambda issue: issue['assignee'] != None)
 
         # Get a list of users issues are assigned to
-        owners = issue_set.map(lambda issue: issue['assignee']['login']).distinct()
+        owners = issue_set.map(lambda issue: issue['assignee']).distinct()
         
         # Count the issues with a given owner and state (shorthand since we reuse this)
         def count_issues(owner,state):
-            return issue_set.filter(lambda issue: (issue['assignee']['login'] == owner) & (issue['state'] == state)).count()
+            return issue_set.filter(lambda issue: (issue['assignee']['login'] == owner['login']) & (issue['state'] == state)).count()
 
         # Return a list of documents with stats for each owner
         return owners.map(lambda owner: {
-            'owner':    owner,
+            'owner':    owner['login'],
+            'owner_avatar_url': owner['avatar_url'],
             'open_issues': count_issues(owner,'open'),
             'closed_issues': count_issues(owner,'closed'),
         })
@@ -190,6 +191,9 @@ def timed_job():
 
 # Kick everything off
 if __name__ == '__main__':
+    conn = connect_to_db()
+    generate_stats(conn)
+    conn.close()
     sched.start()
     update_data(check_for_existing_data=True)
     app.run()

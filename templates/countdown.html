@@ -22,16 +22,39 @@
             <div id="progress"><span style="width:{{progress_percent}}%;"></span></div>
             <div id="progress-caption">{{open_issues}} open / {{closed_issues}} closed</div>
         </script>
+        <script id="leaderboard-template" type="text/x-handlebars-template">
+            <h3>Hall of Fame</h3>
+            {{# if winners}}
+                <div class="users">
+                {{#each winners}}
+                    <div class="user">
+                        <p class="open-closed">{{open_issues}} open, {{closed_issues}} closed</p>
+                        <img src="{{owner_avatar_url}}" />
+                        <p class="name">{{owner}}</p>
+                    </div>
+                {{/each}}
+                </div>
+            {{/if}}
+            <h3>Hall of Shame</h3>
+            {{# if losers}}
+                <div class="users">
+                {{#each losers}}
+                    <div class="user">
+                        <p class="open-closed">{{open_issues}} open, {{closed_issues}} closed</p>
+                        <img src="{{owner_avatar_url}}" />
+                        <p class="name">{{owner}}</p>
+                    </div>
+                {{/each}}
+                </div>
+            {{/if}}
+        </script>
         {% endraw %}
     </head>
     <body>
-        <table style="width:100%; height: 100%;"><tbody><tr>
-            <td id="left" style="width:23%;vertical-align:top;">
-                <div id="summary"></div>
-            </td>
-            <td id="right" style="width:77%;">
-                <div id="chart" style="height: 95%;"></div>
-            </td>
+        <table id="layout"><tbody><tr>
+            <td id="left"><div id="summary"></div></td>
+            <td id="center"><div id="chart"></div></td>
+            <td id="right"><div id="leaderboard"></div></td>
         </tr></tbody></table>
     </body>
 </html>
