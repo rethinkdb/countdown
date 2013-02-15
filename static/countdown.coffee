@@ -47,12 +47,16 @@ $ ->
                 closed_issues: report.closed_issues
                 days_left: Math.floor((deadline - new Date report.datetime)/1000/24/60/60)
                 progress_percent: Math.floor(report.closed_issues / (report.open_issues + report.closed_issues) * 100)
- 
-            user_stats = _.sortBy report.user_stats, (stats) -> stats.closed_issues
-            num_leaders = 3
+            report.user_stats.sort (a,b) ->
+                div_a = a.open_issues / a.closed_issues
+                div_b = b.open_issues / b.closed_issues
+                # If the fraction is the same, rank the one with more closed issues higher
+                if div_a == div_b
+                    return b.closed_issues - a.closed_issues
+                return div_a - div_b
+
             $leaderboard.html templates['leaderboard']
-                winners: _.last(user_stats, num_leaders)
-                losers: _.first(user_stats, num_leaders)
+               users: report.user_stats
         $.getJSON '/get_data', (reports) ->
             data = _.map reports, (report) ->
                 return [new Date(report.datetime), report.open_issues]

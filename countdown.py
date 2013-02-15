@@ -7,7 +7,7 @@ import json
 import yaml
 from apscheduler.scheduler import Scheduler
 import logging
-import datetime
+from datetime import datetime
 import sys
 
 # Configuration and static variables
@@ -17,6 +17,7 @@ URL = 'https://api.github.com/repos/'+config['repo']
 MILESTONE = config['milestone']
 STATS_TABLE = 'stats'
 ISSUES_TABLE = 'issues'
+UPDATE_INTERVAL = 30 # in minutes
 
 # Simple utility functions
 def connect_to_db():
@@ -24,26 +25,32 @@ def connect_to_db():
 
 def update_data(check_for_existing_data=False):
     conn = connect_to_db()
-    print "check for existing data: "+str(check_for_existing_data)
-    print "count_issues: "+ str(r.table(ISSUES_TABLE).count().run()) 
-    print "count stats: "+ str(r.table(STATS_TABLE).count().run())
-    print "boolean: "+ str(not check_for_existing_data or (check_for_existing_data and r.table(ISSUES_TABLE).count().run() == 0))
-    if not check_for_existing_data or (check_for_existing_data and r.table(ISSUES_TABLE).count().run() == 0):
+    issue_count = r.table(ISSUES_TABLE).count().run()
+    stats_count = r.table(STATS_TABLE).count().run()
+    
+    # If the last recorded report is significantly older than the last report we fetched (or if we have no reports), update the data
+    if stats_count > 0:
+        last_date = datetime.strptime(r.table(STATS_TABLE).order_by(r.desc('datetime'))[0]['datetime'].run(), "%Y-%m-%dT%H:%M:%S.%fZ")
+        if (datetime.utcnow() - last_date).total_seconds() / 60 >= UPDATE_INTERVAL:
+            check_for_existing_data = False
+    else:
+        check_for_existing_data = False
+
+    if not check_for_existing_data or (check_for_existing_data and issue_count == 0):
         pull_new_issues(conn)
-    if not check_for_existing_data or (check_for_existing_data and r.table(STATS_TABLE).count().run() == 0):
+    if not check_for_existing_data or (check_for_existing_data and stats_count == 0):
         generate_stats(conn)
     conn.close()
     
-
 def pull_new_issues(rdb_conn):
     issues = []
-    print "Pulling issues from Github..."
+    print "Pulling issues from Github repo %s:" % config['repo']
 
     for state in ['open','closed']:
         page_num = 0
         while True:
             url = "%s/issues?page=%d&state=%s" % (URL, page_num, state)
-            sys.stdout.write("Processing page %d of issues...   \r" % page_num)
+            sys.stdout.write("Processing page %d of %s issues.   \r" % (page_num, state))
             sys.stdout.flush()
             gh_issue_set = requests.get(url=url, headers=HEADERS).json
 
@@ -56,13 +63,16 @@ def pull_new_issues(rdb_conn):
 
             issues += gh_issue_set
             page_num += 1
-
-        print "Pulled %d issues from Github that are %s." % (len(issues),state)
-    print "Pulled a total of %d issues." % len(issues)
+    
+    print "Pulled a total of %d issues (not necessarily unique)." % len(issues)
+    sys.stdout.write("Deleting existing issues.\r")
+    sys.stdout.flush()
     r.table(ISSUES_TABLE).delete().run(rdb_conn)
+    sys.stdout.write("Inserting issues into RethinkDB.\r")
+    sys.stdout.flush()
     r.table(ISSUES_TABLE).insert(issues).run(rdb_conn)
     num_inserted = r.table(ISSUES_TABLE).count().run()
-    print "Inserted %d issues into RethinkDB." % num_inserted
+    print "Inserted %d unique issues into RethinkDB." % num_inserted
 
 def generate_stats(rdb_conn):
     issues = r.table(ISSUES_TABLE)
@@ -120,7 +130,7 @@ def generate_stats(rdb_conn):
     })
 
     # Add the generated report to the database
-    print "Generating and inserting new user stats at %s" % datetime.datetime.now().strftime("%Y-%m-%d %H:%M")
+    print "Generating and inserting new user stats at %s" % datetime.now().strftime("%Y-%m-%d %H:%M")
     r.table(STATS_TABLE).insert(r.expr([report]).array_to_stream()).run(rdb_conn)
 
 # Flask application
@@ -185,15 +195,12 @@ def get_deadline():
 logging.basicConfig(level=logging.DEBUG)
 sched = Scheduler()
 
-@sched.interval_schedule(minutes=10)
+@sched.interval_schedule(minutes=UPDATE_INTERVAL)
 def timed_job():
     update_data()
 
 # Kick everything off
 if __name__ == '__main__':
-    conn = connect_to_db()
-    generate_stats(conn)
-    conn.close()
-    sched.start()
+    #sched.start()
     update_data(check_for_existing_data=True)
     app.run()

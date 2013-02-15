@@ -24,23 +24,11 @@
         </script>
         <script id="leaderboard-template" type="text/x-handlebars-template">
             <h3>Hall of Fame</h3>
-            {{# if winners}}
+            {{# if users}}
                 <div class="users">
-                {{#each winners}}
+                {{#each users}}
                     <div class="user">
-                        <p class="open-closed">{{open_issues}} open, {{closed_issues}} closed</p>
-                        <img src="{{owner_avatar_url}}" />
-                        <p class="name">{{owner}}</p>
-                    </div>
-                {{/each}}
-                </div>
-            {{/if}}
-            <h3>Hall of Shame</h3>
-            {{# if losers}}
-                <div class="users">
-                {{#each losers}}
-                    <div class="user">
-                        <p class="open-closed">{{open_issues}} open, {{closed_issues}} closed</p>
+                        <p class="open-closed">{{open_issues}} open / {{closed_issues}} closed</p>
                         <img src="{{owner_avatar_url}}" />
                         <p class="name">{{owner}}</p>
                     </div>
