@@ -15,9 +15,9 @@ config = yaml.load(open('config.yaml'))
 HEADERS = {'Authorization': 'token ' + config['oauth']}
 URL = 'https://api.github.com/repos/'+config['repo']
 MILESTONE = config['milestone']
+UPDATE_INTERVAL = config['update_interval'] # in minutes
 STATS_TABLE = 'stats'
 ISSUES_TABLE = 'issues'
-UPDATE_INTERVAL = 30 # in minutes
 
 # Simple utility functions
 def connect_to_db():
@@ -191,16 +191,17 @@ def get_deadline():
         'milestone': config['milestone']
     })
 
-# Process to get the new data points
-logging.basicConfig(level=logging.DEBUG)
+# Turn logging on by uncommenting this line
+#logging.basicConfig(level=logging.DEBUG)
 sched = Scheduler()
 
+# We're using the scheduler to periodically poll for updates
 @sched.interval_schedule(minutes=UPDATE_INTERVAL)
 def timed_job():
     update_data()
 
 # Kick everything off
 if __name__ == '__main__':
-    #sched.start()
+    sched.start()
     update_data(check_for_existing_data=True)
     app.run()

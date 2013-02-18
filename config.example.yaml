@@ -1,7 +1,7 @@
 --- # Leaderboard configuration
 repo: repo/repo
 oauth: super_secret_token
-timespan: 30
+update_interval: 60
 flask:
     host: '127.0.0.1'
     port: 5000
