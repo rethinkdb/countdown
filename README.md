@@ -1,5 +1,17 @@
-countdown
+Countdown
 =========
+
+Installation
+============
+
+```
+pip install Flask
+pip install Flask-Assets
+pip install rethinkdb
+pip install apscheduler
+pip install requests
+pip install pyyaml
+```
 
 License
 =======

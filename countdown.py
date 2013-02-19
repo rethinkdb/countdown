@@ -8,10 +8,10 @@ import yaml
 from apscheduler.scheduler import Scheduler
 import logging
 from datetime import datetime
-import sys
+import os, sys
 
 # Configuration and static variables
-config = yaml.load(open('config.yaml'))
+config = yaml.load(open(os.path.join(os.path.dirname(os.path.realpath(__file__)),'config.yaml')))
 HEADERS = {'Authorization': 'token ' + config['oauth']}
 URL = 'https://api.github.com/repos/'+config['repo']
 MILESTONE = config['milestone']
