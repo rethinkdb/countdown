@@ -52,7 +52,7 @@ def pull_new_issues(rdb_conn):
             url = "%s/issues?page=%d&state=%s" % (URL, page_num, state)
             sys.stdout.write("Processing page %d of %s issues.   \r" % (page_num, state))
             sys.stdout.flush()
-            gh_issue_set = requests.get(url=url, headers=HEADERS).json
+            gh_issue_set = requests.get(url=url, headers=HEADERS).json()
 
             if 'message' in gh_issue_set and gh_issue_set['message'] == 'Not Found':
                 print "No issues found for the %s repository." % config['repo']
