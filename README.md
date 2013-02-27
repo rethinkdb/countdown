@@ -36,7 +36,6 @@ server {
 ```
 npm install -g less
 npm install -g coffee-script
->>>>>>> Support for multiple milestones, integrated CherryPy server.
 ```
 
 License
