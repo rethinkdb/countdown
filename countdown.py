@@ -222,17 +222,17 @@ if __name__ == '__main__':
     sched.start()
     update_data(check_for_existing_data=True)
 
-     # We use the CherryPy server because it's easy to deploy,
-     # more robust than the Flask dev server, and doesn't have
-     # problems with Python threads (aka APScheduler)
-     cherrypy.tree.graft(app, '/')
-     cherrypy.tree.mount(None, '/static', {'/': {
-         'tools.staticdir.dir': app.static_folder,
-         'tools.staticdir.on': True,
-         }})
-     cherrypy.config.update({
-         'server.socket_port': config['server']['host'],
-         'server.socket_host': config['server']['port'],
-         })
-     cherrypy.engine.start()
-     cherrypy.engine.block()
+    # We use the CherryPy server because it's easy to deploy,
+    # more robust than the Flask dev server, and doesn't have
+    # problems with Python threads (aka APScheduler)
+    cherrypy.tree.graft(app, '/')
+    cherrypy.tree.mount(None, '/static', {'/': {
+        'tools.staticdir.dir': app.static_folder,
+        'tools.staticdir.on': True,
+        }})
+    cherrypy.config.update({
+        'server.socket_host': config['server']['host'],
+        'server.socket_port': config['server']['port'],
+        })
+    cherrypy.engine.start()
+    cherrypy.engine.block()

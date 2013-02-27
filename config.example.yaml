@@ -12,7 +12,7 @@ server:
     # host is the hostname or IP address on which to listen for any incoming connections.
     # Set the host to 0.0.0.0 to bind to all network interfaces.
     host: '127.0.0.1'
-    port: 5000
+    port: 8888
 # Connection details for the RethinkDB server 
 rethinkdb:
     host: '127.0.0.1'
