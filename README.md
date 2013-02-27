@@ -13,6 +13,7 @@ pip install requests
 pip install pyyaml
 ```
 
+<<<<<<< HEAD
 Deploying
 =========
 
@@ -32,6 +33,11 @@ server {
             proxy_pass http://127.0.0.1:8888/;
         }
 }
+=======
+```
+npm install -g less
+npm install -g coffee-script
+>>>>>>> Support for multiple milestones, integrated CherryPy server.
 ```
 
 License

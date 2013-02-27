@@ -1,13 +1,25 @@
 --- # Leaderboard configuration
+# Github repo to track
 repo: repo/repo
+# OAuth token for GitHub (see http://developer.github.com/v3/oauth/)
+# Alternatively, check out the CodeAcademy course on OAuth tokens and GitHub:
+#   http://www.codecademy.com/courses/ruby-beginner-en-ifzi3?curriculum_id=5122e6618faaada4d20007ed
 oauth: super_secret_token
+# How often to fetch data from GitHub and generate stats (in minutes)
 update_interval: 60
-flask:
+# CherryPy server details
+server:
+    # host is the hostname or IP address on which to listen for any incoming connections.
+    # Set the host to 0.0.0.0 to bind to all network interfaces.
     host: '127.0.0.1'
     port: 5000
+# Connection details for the RethinkDB server 
 rethinkdb:
     host: '127.0.0.1'
     port: 28015
     db: countdown_app
-milestone: 'issue_milestone'
+# List of milestones that we'll be tracking
+milestones:
+    - issue_milestone
+    - issue_milestone_2
 deadline: '2013-02-14'

@@ -1,4 +1,5 @@
 #! /usr/bin/env python
+import cherrypy
 from flask import Flask, g, render_template
 from flask.ext.assets import Environment, Bundle
 from rethinkdb import r
@@ -14,7 +15,7 @@ import os, sys
 config = yaml.load(open(os.path.join(os.path.dirname(os.path.realpath(__file__)),'config.yaml')))
 HEADERS = {'Authorization': 'token ' + config['oauth']}
 URL = 'https://api.github.com/repos/'+config['repo']
-MILESTONE = config['milestone']
+MILESTONES = map(str, config['milestones'])
 UPDATE_INTERVAL = config['update_interval'] # in minutes
 STATS_TABLE = 'stats'
 ISSUES_TABLE = 'issues'
@@ -133,6 +134,13 @@ def generate_stats(rdb_conn):
     print "Generating and inserting new user stats at %s" % datetime.now().strftime("%Y-%m-%d %H:%M")
     r.table(STATS_TABLE).insert(r.expr([report]).array_to_stream()).run(rdb_conn)
 
+# Build a chained boolean expression that tests if a given ReQL value is in an array
+def is_in_array(reql_value, array):
+    query = False
+    for value in array:
+        query = query | (reql_value == value)       
+    return query
+
 # Flask application
 app = Flask(__name__)
 assets = Environment(app)
@@ -166,33 +174,42 @@ def teardown_request(exception):
 def index():
     return render_template('countdown.html')
 
+# TODO
+# Currently this sends a subset of the reports to the client, filtered for the
+# milestones and with a bit of metadata (datetime of the report). 
+#
+# Ultimately, we would want to do a reduction and create a whole new object
+# (this should be done with a groupBy). But until groupBy is more flexible,
+# we'll stick with this Gordian Knot.
 @app.route('/get_data')
 def get_data():
     selection = list(r.table(STATS_TABLE).order_by('datetime').map(lambda report:
         report['by_milestone'].filter(lambda report_by_m:
-            report_by_m['milestone'] == MILESTONE
+            is_in_array(report_by_m['milestone'], MILESTONES)
         ).map(lambda filtered_report:
             filtered_report.merge({'datetime': report['datetime']})
-        )[0]).run(g.rdb_conn))
+        )).run(g.rdb_conn))
     return json.dumps(selection)
 
 @app.route('/latest')
 def latest():
     last_report = r.table(STATS_TABLE).order_by(r.desc('datetime'))[0]
     selection = last_report['by_milestone'].filter(lambda report_by_m:
-            report_by_m['milestone'] == MILESTONE
-    )[0].merge({'datetime': last_report['datetime']}).run(g.rdb_conn)
+            is_in_array(report_by_m['milestone'], MILESTONES)
+        ).map(lambda filtered_report: 
+            filtered_report.merge({'datetime': last_report['datetime']})
+        ).run(g.rdb_conn)
     return json.dumps(selection)
 
 @app.route('/get_deadline')
 def get_deadline():
     return json.dumps({
         'deadline': config['deadline'],
-        'milestone': config['milestone']
+        'milestones': MILESTONES
     })
 
 # Turn logging on by uncommenting this line
-#logging.basicConfig(level=logging.DEBUG)
+logging.basicConfig(level=logging.DEBUG)
 sched = Scheduler()
 
 # We're using the scheduler to periodically poll for updates
@@ -204,4 +221,18 @@ def timed_job():
 if __name__ == '__main__':
     sched.start()
     update_data(check_for_existing_data=True)
-    app.run()
+
+     # We use the CherryPy server because it's easy to deploy,
+     # more robust than the Flask dev server, and doesn't have
+     # problems with Python threads (aka APScheduler)
+     cherrypy.tree.graft(app, '/')
+     cherrypy.tree.mount(None, '/static', {'/': {
+         'tools.staticdir.dir': app.static_folder,
+         'tools.staticdir.on': True,
+         }})
+     cherrypy.config.update({
+         'server.socket_port': config['server']['host'],
+         'server.socket_host': config['server']['port'],
+         })
+     cherrypy.engine.start()
+     cherrypy.engine.block()

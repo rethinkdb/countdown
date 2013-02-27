@@ -43,8 +43,14 @@ $ ->
     update = ->
         $.getJSON '/latest', (report) ->
             $summary.html templates['summary']
-                open_issues: report.open_issues
-                closed_issues: report.closed_issues
+                open_issues: _.reduce(report, (total_open, milestone) ->
+                    console.log 'total',total_open
+                    console.log milestone.open_issues
+                    total_open = total_open + milestone.open_issues
+                , 0)
+                closed_issues: _.reduce(report, (total_closed, milestone) ->
+                     total_closed = total_closed + milestone.closed_issues
+                )
                 days_left: Math.floor((deadline - new Date report.datetime)/1000/24/60/60) + 1
                 progress_percent: Math.floor(report.closed_issues / (report.open_issues + report.closed_issues) * 100)
             report.user_stats.sort (a,b) ->
