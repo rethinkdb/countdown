@@ -209,10 +209,14 @@ def get_deadline():
     })
 
 # Turn logging on by uncommenting this line
-logging.basicConfig(level=logging.DEBUG)
-sched = Scheduler()
+if config['logging']:
+    loglevel = logging.DEBUG
+else:
+    loglevel = logging.CRITICAL
+logging.basicConfig(level=loglevel)
 
 # We're using the scheduler to periodically poll for updates
+sched = Scheduler()
 @sched.interval_schedule(minutes=UPDATE_INTERVAL)
 def timed_job():
     update_data()

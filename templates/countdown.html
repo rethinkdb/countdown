@@ -20,10 +20,11 @@
             <p>{{inflect days_left "day" "days"}} left</p>
             <hr />
             <div id="progress"><span style="width:{{progress_percent}}%;"></span></div>
-            <div id="progress-caption">{{open_issues}} open / {{closed_issues}} closed</div>
+            <p class="caption">{{open_issues}} open / {{closed_issues}} closed</p>
+            <p class="caption milestones">Milestones: {{comma_separated milestones}}</p>
         </script>
         <script id="leaderboard-template" type="text/x-handlebars-template">
-            <h3>Hall of Fame</h3>
+            <h3>Hall of Shame</h3>
             {{# if users}}
                 <div class="users">
                 {{#each users}}

@@ -1,3 +1,11 @@
+# Returns a comma-separated list of the provided array
+Handlebars.registerHelper 'comma_separated', (context) ->
+    out = ""
+    for i in [0...context.length]
+        out += context[i]
+        out += ", " if i isnt context.length-1
+    return out
+
 # Set the day boundaries for the graph
 day_areas = (axes) ->
     markings = []
@@ -23,6 +31,36 @@ day_areas = (axes) ->
 
 correct_for_timezone = (date) -> new Date(date.getTime() + date.getTimezoneOffset() * 60 * 1000)
 
+# Compact reports for multiple milestones into one milestone
+compact_reports = (reports) ->
+    compact_report =
+        open_issues: 0
+        closed_issues: 0
+        datetime: reports[0].datetime
+        milestones: []
+        user_stats: []
+
+    # Compact the data points
+    for report in reports
+        compact_report.open_issues += report.open_issues
+        compact_report.closed_issues += report.closed_issues
+        compact_report.milestones.push report.milestone
+        for user_stat in report.user_stats
+            # Try to find an existing stat for this user, and add on the data
+            matched_user = false
+            for existing in compact_report.user_stats
+                if existing.owner is user_stat.owner
+                    console.log existing.owner, user_stat.owner
+                    existing.open_issues += user_stat.open_issues
+                    existing.closed_issues += user_stat.closed_issues
+                    matched_user = true
+                    break
+
+            # If we haven't already compacted numbers for this user, create a new stat in the compact report
+            compact_report.user_stats.push user_stat unless matched_user
+          
+    return compact_report
+
 $ ->
     templates =
         summary: Handlebars.compile $('#summary-template').html()
@@ -41,29 +79,25 @@ $ ->
 
     # Repaint DOM elements and update the graph
     update = ->
-        $.getJSON '/latest', (report) ->
+        $.getJSON '/latest', (milestone_report) ->
+            # Compact the report
+            report = compact_reports milestone_report
             $summary.html templates['summary']
-                open_issues: _.reduce(report, (total_open, milestone) ->
-                    console.log 'total',total_open
-                    console.log milestone.open_issues
-                    total_open = total_open + milestone.open_issues
-                , 0)
-                closed_issues: _.reduce(report, (total_closed, milestone) ->
-                     total_closed = total_closed + milestone.closed_issues
-                )
+                open_issues: report.open_issues
+                closed_issues: report.closed_issues
                 days_left: Math.floor((deadline - new Date report.datetime)/1000/24/60/60) + 1
                 progress_percent: Math.floor(report.closed_issues / (report.open_issues + report.closed_issues) * 100)
-            report.user_stats.sort (a,b) ->
-                div_a = (a.open_issues + 1) / (a.closed_issues + 1)
-                div_b = (b.open_issues + 1) / (b.closed_issues + 1)
-                # If the fraction is the same, rank the one with more closed issues higher
-                if div_a == div_b
-                    return b.closed_issues - a.closed_issues
-                return div_a - div_b
+                milestones: report.milestones
+
+            report.user_stats.sort (a,b) -> b.open_issues - a.open_issues
 
             $leaderboard.html templates['leaderboard']
                users: report.user_stats
-        $.getJSON '/get_data', (reports) ->
+        $.getJSON '/get_data', (milestone_reports) ->
+            # Compact each of the reports
+            reports = _.map milestone_reports, (milestone_report) ->
+                compact_reports milestone_report
+
             data = _.map reports, (report) ->
                 return [new Date(report.datetime), report.open_issues]
 
