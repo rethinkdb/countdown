@@ -85,7 +85,7 @@ $ ->
             $summary.html templates['summary']
                 open_issues: report.open_issues
                 closed_issues: report.closed_issues
-                days_left: Math.floor((deadline - new Date report.datetime)/1000/24/60/60) + 1
+                days_left: Math.floor((deadline - new Date report.datetime)/1000/24/60/60) + 2
                 progress_percent: Math.floor(report.closed_issues / (report.open_issues + report.closed_issues) * 100)
                 milestones: report.milestones
 
