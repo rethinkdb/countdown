@@ -23,3 +23,5 @@ milestones:
     - issue_milestone
     - issue_milestone_2
 deadline: '2013-02-14'
+# Turn verbose logging on or off
+logging: false
