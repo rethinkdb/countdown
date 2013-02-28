@@ -4,13 +4,13 @@ Countdown
 Installation
 ============
 
+If you don't already have RethinkDB, [go download](http://rethinkdb.com/docs/install) and install it.
+
+Install the required libraries:
 ```
-pip install Flask
-pip install Flask-Assets
-pip install rethinkdb
-pip install apscheduler
-pip install requests
-pip install pyyaml
+npm install -g less
+npm install -g coffee-script
+pip install -r requirements.txt
 ```
 
 Deploying
@@ -34,9 +34,10 @@ server {
 }
 
 ```
-npm install -g less
-npm install -g coffee-script
-```
+
+Important notes
+===============
+Countdown was built with RethinkDB 1.3 ("Metropolis"), which had several outstanding ReQL quirks and bugs. As a result, the queries it employs are more complicated and cumbersome than necessary. A rewrite after RethinkDB 1.4 is released will happen, since the query language in that version is significantly improved.
 
 License
 =======
