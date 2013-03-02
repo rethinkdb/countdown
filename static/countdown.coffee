@@ -112,6 +112,7 @@ $ ->
                         show: true
                         fill: true
                         fillColor: 'rgba(165, 16, 38, 0.2)'
+                        radius: 2
                     shadowSize: 0
                 xaxis:
                     mode: 'time'
@@ -119,9 +120,11 @@ $ ->
                     timeformat: "%b %e, %l:%M %p" 
                     tickLength: 8
                     timezone: 'browser'
+                    ticks: 5
                 yaxis:
                     minTickSize: 1
                     tickDecimals: 0
+                    min: 0
                 grid:
                     markings: day_areas
 
