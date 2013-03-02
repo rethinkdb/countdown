@@ -3,5 +3,6 @@
 .gitignore
 *.swp
 config.yaml
+users.yaml
 static/.webassets-cache
 static/gen

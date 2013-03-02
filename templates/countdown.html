@@ -29,9 +29,12 @@
                 <div class="users">
                 {{#each users}}
                     <div class="user">
-                        <p class="open-closed">{{open_issues}} open / {{closed_issues}} closed</p>
                         <img src="{{owner_avatar_url}}" />
-                        <p class="name">{{owner}}</p>
+                        <div class="user-details">
+                            <p class="open-closed{{#unless owner_project}} middle{{/unless}}">{{open_issues}} open / {{closed_issues}} closed</p>
+                            <p class="name{{#unless owner_project}} middle{{/unless}}">{{owner}}</p>
+                            {{#if owner_project}}<p class="project">{{{owner_project}}}</p>{{/if}}
+                        </div>
                     </div>
                 {{/each}}
                 </div>

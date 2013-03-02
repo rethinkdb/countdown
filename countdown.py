@@ -12,7 +12,10 @@ from datetime import datetime
 import os, sys
 
 # Configuration and static variables
-config = yaml.load(open(os.path.join(os.path.dirname(os.path.realpath(__file__)),'config.yaml')))
+def open_yaml(f):
+    return open(os.path.join(os.path.dirname(os.path.realpath(__file__)), f))
+config = yaml.load(open_yaml('config.yaml'))
+users = yaml.load(open_yaml('users.yaml'))
 HEADERS = {'Authorization': 'token ' + config['oauth']}
 URL = 'https://api.github.com/repos/'+config['repo']
 MILESTONES = map(str, config['milestones'])
@@ -21,6 +24,7 @@ STATS_TABLE = 'stats'
 ISSUES_TABLE = 'issues'
 
 # Simple utility functions
+
 def connect_to_db():
     return r.connect(host=config['rethinkdb']['host'], port=config['rethinkdb']['port'], db_name=config['rethinkdb']['db'])
 
@@ -205,7 +209,8 @@ def latest():
 def get_deadline():
     return json.dumps({
         'deadline': config['deadline'],
-        'milestones': MILESTONES
+        'milestones': MILESTONES,
+        'user_projects': users['github-users']
     })
 
 # Turn logging on by uncommenting this line

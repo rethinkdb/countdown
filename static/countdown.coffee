@@ -50,7 +50,6 @@ compact_reports = (reports) ->
             matched_user = false
             for existing in compact_report.user_stats
                 if existing.owner is user_stat.owner
-                    console.log existing.owner, user_stat.owner
                     existing.open_issues += user_stat.open_issues
                     existing.closed_issues += user_stat.closed_issues
                     matched_user = true
@@ -90,6 +89,10 @@ $ ->
                 milestones: report.milestones
 
             report.user_stats.sort (a,b) -> b.open_issues - a.open_issues
+            # If the user has a project assigned to him, include it in the data for the template
+            for stat in report.user_stats
+                if stat.owner of user_projects
+                    stat.owner_project = user_projects[stat.owner]
 
             $leaderboard.html templates['leaderboard']
                users: report.user_stats
@@ -127,5 +130,7 @@ $ ->
     # Get the deadline and kick off the application
     $.getJSON '/get_deadline', (data) ->
         window.deadline = correct_for_timezone(new Date data.deadline)
+        window.user_projects = {}
+        user_projects[entry.user] = entry.project for entry in data.user_projects
         update()
         setInterval(update, 60000)

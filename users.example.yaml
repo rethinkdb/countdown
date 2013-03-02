@@ -1,0 +1,10 @@
+--- # GitHub user responsiblities: show what everyone's working on
+github-users:
+    - user: george_michael
+      project: Working at the Banana Stand
+    - user: gob_bluth
+      project: Perfecting the Aztec Tomb
+    - user: tobias_funke
+      project: Cooking up a stew with Carl Weathers
+    - user: maeby_funke
+      project: Shooting The Old Man and the Sea for Tantamount Studios
