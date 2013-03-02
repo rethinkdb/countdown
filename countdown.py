@@ -9,13 +9,23 @@ import yaml
 from apscheduler.scheduler import Scheduler
 import logging
 from datetime import datetime
-import os, sys
+import os, sys, socket
 
 # Configuration and static variables
 def open_yaml(f):
     return open(os.path.join(os.path.dirname(os.path.realpath(__file__)), f))
-config = yaml.load(open_yaml('config.yaml'))
-users = yaml.load(open_yaml('users.yaml'))
+try:
+    config = yaml.load(open_yaml('config.yaml'))
+except IOError:
+    print "No configuration file found (see config.example.yaml for a sample configuration.)"
+    sys.exit()
+try:
+    users = yaml.load(open_yaml('users.yaml'))
+except IOError:
+    print "No user projects specified (see users.example.yaml for a sample configuration.)"
+    users = {
+        'github-users': []
+    }
 HEADERS = {'Authorization': 'token ' + config['oauth']}
 URL = 'https://api.github.com/repos/'+config['repo']
 MILESTONES = map(str, config['milestones'])
@@ -26,7 +36,12 @@ ISSUES_TABLE = 'issues'
 # Simple utility functions
 
 def connect_to_db():
-    return r.connect(host=config['rethinkdb']['host'], port=config['rethinkdb']['port'], db_name=config['rethinkdb']['db'])
+    try:
+        return r.connect(host=config['rethinkdb']['host'], port=config['rethinkdb']['port'], db_name=config['rethinkdb']['db'])
+    except socket.error, (value, message):
+        c = config['rethinkdb']
+        print "Could not connect to RethinkDB on %s:%s (database: %s).\nError message: %s" % (c['host'], c['port'], c['db'], message)
+        sys.exit()
 
 def update_data(check_for_existing_data=False):
     conn = connect_to_db()
