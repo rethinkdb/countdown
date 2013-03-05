@@ -91,7 +91,7 @@ def pull_new_issues(rdb_conn):
     sys.stdout.write("Inserting issues into RethinkDB.\r")
     sys.stdout.flush()
     r.table(ISSUES_TABLE).insert(issues).run(rdb_conn)
-    num_inserted = r.table(ISSUES_TABLE).count().run()
+    num_inserted = r.table(ISSUES_TABLE).count().run(rdb_conn)
     print "Inserted %d unique issues into RethinkDB." % num_inserted
 
 def generate_stats(rdb_conn):
