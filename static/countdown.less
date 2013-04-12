@@ -52,7 +52,7 @@ hr {
         }
     }
     #progress {
-        margin-top: 50px;
+        margin-top: 20px;
         margin-bottom: 20px;
         width: 68%;
         height:20px;
@@ -69,6 +69,11 @@ hr {
             background: #a90329; /* Old browsers */
             .gradient(~"linear-gradient(to bottom, #a90329 0%,#8f0222 44%,#6d0019 100%)");
             filter: progid:DXImageTransform.Microsoft.gradient( startColorstr='#a90329', endColorstr='#6d0019',GradientType=0 ); /* IE6-9 */
+            &.passing {
+                background: #448e44; /* Old browsers */
+                .gradient(~"linear-gradient(to bottom, #448e44 0%,#34632a 100%)");
+                filter: progid:DXImageTransform.Microsoft.gradient( startColorstr='#448e44', endColorstr='#34632a',GradientType=0 ); /* IE6-9 */
+            }
         }
     }
 }

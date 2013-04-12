@@ -81,12 +81,17 @@ $ ->
         $.getJSON '/latest', (milestone_report) ->
             # Compact the report
             report = compact_reports milestone_report
-            $summary.html templates['summary']
-                open_issues: report.open_issues
-                closed_issues: report.closed_issues
-                days_left: Math.floor((deadline - new Date report.datetime)/1000/24/60/60) + 1
-                progress_percent: Math.floor(report.closed_issues / (report.open_issues + report.closed_issues) * 100)
-                milestones: report.milestones
+            $.getJSON '/test_status', (test_report) ->
+                $summary.html templates['summary']
+                    open_issues: report.open_issues
+                    closed_issues: report.closed_issues
+                    days_left: Math.floor((deadline - new Date report.datetime)/1000/24/60/60) + 1
+                    progress_percent: Math.floor(report.closed_issues / (report.open_issues + report.closed_issues) * 100)
+                    milestones: report.milestones
+                    tests_passing: test_report.num_failing is 0
+                    num_passing: test_report.num_passing
+                    num_failing: test_report.num_failing
+                    tests_percent: Math.floor(test_report.num_passing / (test_report.num_passing + test_report.num_failing) * 100)
 
             report.user_stats.sort (a,b) -> b.open_issues - a.open_issues
             # If the user has a project assigned to him, include it in the data for the template
@@ -96,6 +101,7 @@ $ ->
 
             $leaderboard.html templates['leaderboard']
                users: report.user_stats
+
         $.getJSON '/get_data', (milestone_reports) ->
             # Compact each of the reports
             reports = _.map milestone_reports, (milestone_report) ->

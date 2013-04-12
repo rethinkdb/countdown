@@ -19,8 +19,12 @@
             <h1 class="days-left">{{days_left}}</h1>
             <p>{{inflect days_left "day" "days"}} left</p>
             <hr />
+            <!--
             <div id="progress"><span style="width:{{progress_percent}}%;"></span></div>
             <p class="caption">{{open_issues}} open / {{closed_issues}} closed</p>
+            -->
+            <p class="caption">{{num_passing}} passing / {{num_failing}} failing</p>
+            <div id="progress"><span class="{{#if tests_passing}}passing{{/if}}" style="width:{{tests_percent}}%;"></span></div>
             <p class="caption milestones">Milestones: {{comma_separated milestones}}</p>
         </script>
         <script id="leaderboard-template" type="text/x-handlebars-template">

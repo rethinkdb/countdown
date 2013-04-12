@@ -1,8 +1,8 @@
 #! /usr/bin/env python
 import cherrypy
-from flask import Flask, g, render_template
+from flask import Flask, g, render_template, request
 from flask.ext.assets import Environment, Bundle
-from rethinkdb import r
+import rethinkdb as r
 import requests
 import json
 import yaml
@@ -10,6 +10,7 @@ from apscheduler.scheduler import Scheduler
 import logging
 from datetime import datetime
 import os, sys, socket
+import argparse
 
 # Configuration and static variables
 def open_yaml(f):
@@ -32,12 +33,13 @@ MILESTONES = map(str, config['milestones'])
 UPDATE_INTERVAL = config['update_interval'] # in minutes
 STATS_TABLE = 'stats'
 ISSUES_TABLE = 'issues'
+METADATA_TABLE = 'metadata'
 
 # Simple utility functions
 
 def connect_to_db():
     try:
-        return r.connect(host=config['rethinkdb']['host'], port=config['rethinkdb']['port'], db_name=config['rethinkdb']['db'])
+        return r.connect(host=config['rethinkdb']['host'], port=config['rethinkdb']['port'], db=config['rethinkdb']['db'])
     except socket.error, (value, message):
         c = config['rethinkdb']
         print "Could not connect to RethinkDB on %s:%s (database: %s).\nError message: %s" % (c['host'], c['port'], c['db'], message)
@@ -45,12 +47,12 @@ def connect_to_db():
 
 def update_data(check_for_existing_data=False):
     conn = connect_to_db()
-    issue_count = r.table(ISSUES_TABLE).count().run()
-    stats_count = r.table(STATS_TABLE).count().run()
+    issue_count = r.table(ISSUES_TABLE).count().run(conn)
+    stats_count = r.table(STATS_TABLE).count().run(conn)
     
     # If the last recorded report is significantly older than the last report we fetched (or if we have no reports), update the data
     if stats_count > 0:
-        last_date = datetime.strptime(r.table(STATS_TABLE).order_by(r.desc('datetime'))[0]['datetime'].run(), "%Y-%m-%dT%H:%M:%S.%fZ")
+        last_date = datetime.strptime(r.table(STATS_TABLE).order_by(r.desc('datetime'))[0]['datetime'].run(conn), "%Y-%m-%dT%H:%M:%S.%fZ")
         if (datetime.utcnow() - last_date).total_seconds() / 60 >= UPDATE_INTERVAL:
             check_for_existing_data = False
     else:
@@ -132,26 +134,26 @@ def generate_stats(rdb_conn):
         return issue_set.filter(lambda issue: issue['state'] == state).count()
 
     # Two key things:
-    # - we have to call stream_to_array since this a stream, and this will error otherwise
-    # - we have to call list() on the stats to make sure we pull down all the data from a BatchedIterator
+    # - we have to call coerce_to('array') since we get a sequence, and this will error otherwise
+    # - we have to call list() on the stats to make sure we pull down all the data from a Cursor
     report = r.expr({
         'datetime': r.js('(new Date).toISOString()'),
-        'by_milestone': r.union(r.expr([{
+        'by_milestone': r.expr([{
             'milestone': 'all',
             'open_issues': num_issues('open'),
             'closed_issues': num_issues('closed'),
-            'user_stats': user_stats(issues).stream_to_array()
-        }]).array_to_stream(), milestones.map(lambda m: {
+            'user_stats': user_stats(issues).coerce_to('array')
+        }]).union(milestones.map(lambda m: {
             'milestone': m,
             'open_issues': num_issues('open', m),
             'closed_issues': num_issues('closed', m),
-            'user_stats': user_stats_by_milestone(m).stream_to_array()
-        })).stream_to_array()
+            'user_stats': user_stats_by_milestone(m).coerce_to('array')
+        }))
     })
 
     # Add the generated report to the database
     print "Generating and inserting new user stats at %s" % datetime.now().strftime("%Y-%m-%d %H:%M")
-    r.table(STATS_TABLE).insert(r.expr([report]).array_to_stream()).run(rdb_conn)
+    r.table(STATS_TABLE).insert(r.expr([report])).run(rdb_conn)
 
 # Build a chained boolean expression that tests if a given ReQL value is in an array
 def is_in_array(reql_value, array):
@@ -227,6 +229,38 @@ def get_deadline():
         'milestones': MILESTONES,
         'user_projects': users['github-users']
     })
+
+@app.route('/test_status', methods=['GET', 'POST'])
+def test_status():
+    if request.method == 'POST':
+        conn = connect_to_db()
+        test_status_to_insert = {
+            'type': 'test_status',
+            'num_passing': int(request.form['num_passing']),
+            'num_failing': int(request.form['num_failing'])
+        }
+        r.table(METADATA_TABLE).insert(test_status_to_insert, upsert=True).run(conn)
+        conn.close()
+    conn = connect_to_db()
+    test_status = r.table(METADATA_TABLE).get('test_status').run(conn)
+    conn.close()
+    return json.dumps(test_status)
+
+
+# Parse command-line arguments
+# TODO disabled until table_create works
+"""
+parser = argparse.ArgumentParser()
+parser.add_argument("--firstrun", action="store_true", help="Create the database and tables required for Countdown.")
+args = parser.parse_args()
+if args.firstrun:
+    conn = connect_to_db()
+    r.db_create(config['rethinkdb']['db'])
+    r.table_create(STATS_TABLE)
+    r.table_create(ISSUES_TABLE)
+    r.table_create(METADATA_TABLE)
+    conn.close()
+""" 
 
 # Turn logging on by uncommenting this line
 if config['logging']:
