@@ -1,8 +1,8 @@
 #! /usr/bin/env python
 import cherrypy
 from flask import Flask, g, render_template, request
-from flask.ext.assets import Environment, Bundle
-import rethinkdb as r
+from flask_assets import Environment, Bundle
+from rethinkdb import RethinkDB
 import requests
 import json
 import yaml
@@ -11,6 +11,8 @@ import logging
 from datetime import datetime
 import os, sys, socket
 import argparse
+
+r = RethinkDB()
 
 # Configuration and static variables
 def open_yaml(f):
@@ -260,7 +262,7 @@ if args.firstrun:
     r.table_create(ISSUES_TABLE)
     r.table_create(METADATA_TABLE)
     conn.close()
-""" 
+"""
 
 # Turn logging on by uncommenting this line
 if config['logging']:

@@ -1,6 +1,11 @@
 Countdown
 =========
 
+*Note*: This code is ancient.  It's probably non-working.  Its usage of the
+Github API seems to be outdated.  Its code mentions that
+`table_create` is not available yet.  You should view this repo as
+historically (un)interesting.
+
 Installation
 ============
 
