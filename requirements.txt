@@ -3,7 +3,7 @@ CherryPy==3.2.2
 Flask==1.0.0
 Flask-Assets==0.8
 Jinja2==2.10.1
-PyYAML==4.2b1
+PyYAML==5.4
 Werkzeug==0.15.3
 argparse==1.2.1
 protobuf==2.4.1
